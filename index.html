@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<title>&nbsp;</title>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+		<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=geometry"></script>
+		<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+	</head>
+	<body>
+		<!-- Start of first page I -->
+		<div data-role="page" id="page1">
+			<!-- Header -->
+			<div data-role="header">
+				<h1>eSkiing</h1>
+
+			</div>
+			<!-- /header -->
+			<!-- Content    -->
+			<div data-role="content">
+				<h3>Podatki:</h3>
+				<p>
+					<ul data-role="listview" data-inset="true" class="ui-listview ui-listview-inset ui-corner-all ui-shadow">
+						<li class="ui-li ui-li-static ui-btn-up-c ui-first-child"><div align="center">Hitrost</div><div align="center" id="hitrost">12</div></li>
+						<li class="ui-li ui-li-static ui-btn-up-c"><div align="center">Pot</div><div align="center" id="pot">12</div></li>
+						<li class="ui-li ui-li-static ui-btn-up-c"><div align="center">Lokacija</div><div align="center" id="lokacija">12</div></li>
+						<li class="ui-li ui-li-static ui-btn-up-c"><div align="center">Čas</div><div align="center" id="cas">12</div></li>
+						<li class="ui-li ui-li-static ui-btn-up-c ui-last-child"><div align="center">ID</div><div align="center" id="id">12</div></li>
+					</ul>
+				</p>
+			</div>
+			<!-- /content -->
+			<!-- footer -->
+			<div data-role="footer" data-position="fixed">
+				<h4>&copy; 2013 Nejc Savodnik</h4>
+			</div>
+			<!-- /footer -->
+		</div>
+		<!-- /page -->
+	</body>
+</html>
+<script>
+	var lastLat = null;
+	var lastLon = null;
+	var geoLocationHandler = {
+    	arrLocations : [],
+    	distance : 0,
+    	addLocation:function(obj){
+        	geoLocationHandler.arrLocations.push(obj);
+    	},
+    	calcDistance:function(fromLat, fromLng, toLat, toLng) {
+        	return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(fromLat, fromLng), new google.maps.LatLng(toLat, toLng));
+    	}
+    	};
+	
+	document.addEventListener("deviceready", onDeviceReady, false);
+	
+	var watchID = null;
+
+	function onDeviceReady() {
+		document.addEventListener("pause", onPause, false);
+		document.addEventListener("resume", onResume, false);
+		alert("Device is Ready");
+		var options = {enableHighAccuracy: true };
+		watchID = navigator.geolocation.watchPosition(onSuccess, onError, options);
+		$("#id").html(device.uuid);
+	}
+
+//What to do when paused
+function onPause(){
+	
+	alert("paused!");
+}
+
+//What to do when resumed
+function onResume()
+{
+	
+	alert("resume");
+}
+
+function onSuccess(position) 
+{
+	var date = new Date();
+	var hour = date.getHours();
+	var min = date.getMinutes();
+	var seconds = date.getSeconds();
+	$("#hitrost").html(position.coords.speed);
+	$("#cas").html(hour+":"+min+":"+seconds);
+	$("#lokacija").html(position.coords.latitude +","+ position.coords.longitude);
+	var coordinateObject= new Object();
+    coordinateObject.lat = lastLat;
+    coordinateObject.lng = lastLon;
+    geoLocationHandler.addLocation(coordinateObject);
+	var coordinateObject = new Object();
+    coordinateObject.lat = position.coords.latitude; 
+    coordinateObject.lng = position.coords.longitude;
+    geoLocationHandler.addLocation(coordinateObject);
+    lastLat = position.coords.latitude;
+	lastLon = position.coords.longitude;
+    var len = geoLocationHandler.arrLocations.length;
+    for (var i = 0; i < len; i++) {
+        if(i == 1){
+            geoLocationHandler.distance += geoLocationHandler.calcDistance(geoLocationHandler.arrLocations[i-1].lat,geoLocationHandler.arrLocations[i-1].lng,geoLocationHandler.arrLocations[i].lat,geoLocationHandler.arrLocations[i].lng);
+        }
+    }
+    
+    $("#pot").html(geoLocationHandler.distance);
+}
+
+function onError(error) 
+{
+alert('code: '    + error.code    + '\n' +
+'message: ' + error.message + '\n');
+}
+</script>
